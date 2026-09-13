@@ -3,7 +3,7 @@ class CyberAudio {
     this.ctx = null;
     this.enabled = false;
   }
-  
+
   init() {
     if (this.ctx) return;
     try {
@@ -13,7 +13,7 @@ class CyberAudio {
       console.warn("[DarkProxy] Web Audio API not supported", e);
     }
   }
-  
+
   toggle(state) {
     this.enabled = state;
     if (this.enabled) {
@@ -23,7 +23,7 @@ class CyberAudio {
       }
     }
   }
-  
+
   playClick() {
     if (!this.enabled || !this.ctx) return;
     try {
@@ -33,85 +33,85 @@ class CyberAudio {
       const gain = this.ctx.createGain();
       osc.connect(gain);
       gain.connect(this.ctx.destination);
-      
+
       osc.type = 'sine';
       osc.frequency.setValueAtTime(1400, now);
       osc.frequency.exponentialRampToValueAtTime(400, now + 0.04);
-      
+
       gain.gain.setValueAtTime(0.04, now);
       gain.gain.linearRampToValueAtTime(0.001, now + 0.04);
-      
+
       osc.start(now);
       osc.stop(now + 0.04);
     } catch(e){}
   }
-  
+
   playConnect() {
     if (!this.enabled || !this.ctx) return;
     try {
       this.ctx.resume();
       const now = this.ctx.currentTime;
-      
+
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
       osc.connect(gain);
       gain.connect(this.ctx.destination);
-      
+
       osc.type = 'triangle';
       osc.frequency.setValueAtTime(260, now);
       osc.frequency.exponentialRampToValueAtTime(880, now + 0.3);
-      
+
       gain.gain.setValueAtTime(0.05, now);
       gain.gain.linearRampToValueAtTime(0.001, now + 0.3);
-      
+
       osc.start(now);
       osc.stop(now + 0.3);
     } catch(e){}
   }
-  
+
   playDisconnect() {
     if (!this.enabled || !this.ctx) return;
     try {
       this.ctx.resume();
       const now = this.ctx.currentTime;
-      
+
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
       osc.connect(gain);
       gain.connect(this.ctx.destination);
-      
+
       osc.type = 'triangle';
       osc.frequency.setValueAtTime(740, now);
       osc.frequency.exponentialRampToValueAtTime(180, now + 0.35);
-      
+
       gain.gain.setValueAtTime(0.05, now);
       gain.gain.linearRampToValueAtTime(0.001, now + 0.35);
-      
+
       osc.start(now);
       osc.stop(now + 0.35);
     } catch(e){}
   }
-  
+
   playAlert() {
     if (!this.enabled || !this.ctx) return;
     try {
       this.ctx.resume();
       const now = this.ctx.currentTime;
-      
+
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
       osc.connect(gain);
       gain.connect(this.ctx.destination);
-      
+
       osc.type = 'square';
       osc.frequency.setValueAtTime(180, now);
       osc.frequency.setValueAtTime(280, now + 0.08);
-      
+
       gain.gain.setValueAtTime(0.05, now);
       gain.gain.setValueAtTime(0.001, now + 0.07);
       gain.gain.setValueAtTime(0.05, now + 0.08);
       gain.gain.linearRampToValueAtTime(0.001, now + 0.16);
-      
+
       osc.start(now);
       osc.stop(now + 0.16);
     } catch(e){}
@@ -123,73 +123,75 @@ class MatrixRain {
     this.canvas = document.getElementById(canvasId);
     this.ctx = this.canvas.getContext('2d');
     this.animationId = null;
-    this.fontSize = 8.5;
+    this.lastFrame = 0;
+    this.fontSize = 10;
     this.columns = 0;
     this.drops = [];
-    this.chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZｦｧｨｩｪｫｬｭｮｯｰｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝ";
+    this.chars = "0123456789abcdef";
     this.active = false;
-    
+
     this.resize = this.resize.bind(this);
     this.draw = this.draw.bind(this);
     window.addEventListener('resize', this.resize);
   }
-  
+
   resize() {
-    this.canvas.width = 390;
-    this.canvas.height = 600;
+    const screen = this.canvas.parentElement;
+    this.canvas.width = screen.clientWidth;
+    this.canvas.height = screen.clientHeight;
     this.columns = Math.floor(this.canvas.width / this.fontSize);
-    this.drops = Array(this.columns).fill(1).map(() => Math.floor(Math.random() * -80));
+    this.drops = Array(this.columns).fill(1).map(() => Math.floor(Math.random() * -60));
   }
-  
+
   start() {
     if (this.active) return;
     this.active = true;
-    this.canvas.style.opacity = "0.16";
+    this.canvas.classList.add('on');
     this.resize();
-    this.draw();
+    this.animationId = requestAnimationFrame(this.draw);
   }
-  
+
   stop() {
     this.active = false;
-    this.canvas.style.opacity = "0";
+    this.canvas.classList.remove('on');
     if (this.animationId) {
       cancelAnimationFrame(this.animationId);
       this.animationId = null;
     }
   }
-  
-  draw() {
+
+  draw(timestamp) {
     if (!this.active) return;
-    
-    this.ctx.fillStyle = 'rgba(2, 4, 6, 0.12)';
+    this.animationId = requestAnimationFrame(this.draw);
+
+    // Step at ~20fps so the rain reads like terminal output rather than video
+    if (timestamp - this.lastFrame < 50) return;
+    this.lastFrame = timestamp;
+
+    this.ctx.fillStyle = 'rgba(35, 35, 35, 0.2)';
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-    
-    this.ctx.fillStyle = '#00ff41';
     this.ctx.font = `${this.fontSize}px monospace`;
-    
+
     for (let i = 0; i < this.drops.length; i++) {
       const char = this.chars[Math.floor(Math.random() * this.chars.length)];
       const x = i * this.fontSize;
       const y = this.drops[i] * this.fontSize;
-      
-      if (Math.random() > 0.98) {
-        this.ctx.fillStyle = '#ffffff';
-      } else {
-        this.ctx.fillStyle = '#00ff66';
-      }
-      
+
+      this.ctx.fillStyle = Math.random() > 0.97 ? '#e6e6e6' : '#7c7c7c';
       this.ctx.fillText(char, x, y);
-      
-      if (y > this.canvas.height && Math.random() > 0.985) {
+
+      if (y > this.canvas.height && Math.random() > 0.975) {
         this.drops[i] = 0;
       }
-      
+
       this.drops[i]++;
     }
-    
-    this.animationId = requestAnimationFrame(this.draw);
   }
 }
+
+const TYPE_LABELS = { socks: 'socks5', socks4: 'socks4', http: 'http', https: 'https' };
+const LOG_TAGS = { success: ' ok ', info: 'info', alert: 'fail', muted: ' .. ' };
+const BAR_WIDTH = 20;
 
 let proxies = [];
 let activeProxy = null;
@@ -202,8 +204,8 @@ const audioEngine = new CyberAudio();
 const matrixAnim = new MatrixRain('matrix-canvas');
 
 const statusText = document.getElementById('status-text');
-const statusLed = document.getElementById('status-led');
 const proxyToggle = document.getElementById('proxy-toggle');
+const routeProxy = document.getElementById('route-proxy');
 
 const activeName = document.getElementById('active-profile-name');
 const activeAddress = document.getElementById('active-profile-address');
@@ -215,6 +217,7 @@ const profileCount = document.getElementById('profile-count');
 
 const addForm = document.getElementById('add-proxy-form');
 const terminalContent = document.getElementById('terminal-content');
+const logBody = document.getElementById('log-body');
 const clearLogBtn = document.getElementById('clear-log-btn');
 
 const viewDashboard = document.getElementById('view-dashboard');
@@ -224,13 +227,6 @@ const backToDashBtn = document.getElementById('back-to-dash-btn');
 
 const soundToggleBtn = document.getElementById('sound-toggle-btn');
 const matrixToggleBtn = document.getElementById('matrix-toggle-btn');
-
-const pathLeft = document.getElementById('path-left');
-const pathRight = document.getElementById('path-right');
-const packetLeft = document.getElementById('packet-left');
-const packetRight = document.getElementById('packet-right');
-const svgNodeProxy = document.getElementById('svg-node-proxy');
-const svgProxyLabel = document.getElementById('svg-proxy-label');
 
 const packetStatus = document.getElementById('packet-status');
 const packetCountVal = document.getElementById('packet-count-val');
@@ -246,9 +242,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   let storage = {};
   try {
     storage = await browser.storage.local.get([
-      'proxies', 
-      'activeProxy', 
-      'proxyEnabled', 
+      'proxies',
+      'activeProxy',
+      'proxyEnabled',
       'connectionStartTime',
       'soundEnabled',
       'matrixEnabled',
@@ -259,7 +255,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   proxies = storage.proxies || [];
-  
+
   if (proxies.length === 0) {
     const defaultLocalProxy = {
       id: "default-localhost",
@@ -280,62 +276,46 @@ document.addEventListener('DOMContentLoaded', async () => {
   } else {
     activeProxy = storage.activeProxy || null;
   }
-  
+
   proxyEnabled = !!storage.proxyEnabled;
   cumulativePackets = storage.cumulativePackets || 0;
 
   const soundEnabled = storage.soundEnabled !== false;
   const matrixEnabled = storage.matrixEnabled === true;
-  
+
   audioEngine.toggle(soundEnabled);
-  soundToggleBtn.textContent = soundEnabled ? '[SOUND: ON]' : '[MUTED]';
-  if (soundEnabled) soundToggleBtn.classList.add('active');
+  renderSoundButton(soundEnabled);
 
   if (matrixEnabled) {
     matrixAnim.start();
-    matrixToggleBtn.textContent = '[MTX: ON]';
-    matrixToggleBtn.classList.add('active');
-  } else {
-    matrixAnim.stop();
-    matrixToggleBtn.textContent = '[MTX: OFF]';
-    matrixToggleBtn.classList.remove('active');
   }
+  renderMatrixButton(matrixEnabled);
 
   proxyToggle.checked = proxyEnabled;
   updateStatusDisplay();
   renderProfilesList();
   startDiagnosticsTelemetry();
 
-  await runConsoleBootSequence();
-
   proxyToggle.addEventListener('change', handleToggleProxy);
   addForm.addEventListener('submit', handleAddProfile);
   clearLogBtn.addEventListener('click', handleClearLogs);
-  
+
   goToAddBtn.addEventListener('click', () => {
     audioEngine.playClick();
-    viewDashboard.classList.remove('active');
-    viewAddProfile.classList.add('active');
-    logConsole('Opening security configuration socket...', 'info');
+    showView(viewAddProfile);
   });
-  
+
   backToDashBtn.addEventListener('click', () => {
     audioEngine.playClick();
-    viewAddProfile.classList.remove('active');
-    viewDashboard.classList.add('active');
-    logConsole('Syncing dashboard telemetry stream...', 'info');
+    showView(viewDashboard);
   });
 
   soundToggleBtn.addEventListener('click', async () => {
     const isNowEnabled = !audioEngine.enabled;
     audioEngine.toggle(isNowEnabled);
-    
-    soundToggleBtn.textContent = isNowEnabled ? '[SOUND: ON]' : '[MUTED]';
+    renderSoundButton(isNowEnabled);
     if (isNowEnabled) {
-      soundToggleBtn.classList.add('active');
       audioEngine.playClick();
-    } else {
-      soundToggleBtn.classList.remove('active');
     }
     await browser.storage.local.set({ soundEnabled: isNowEnabled });
   });
@@ -345,13 +325,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     const isNowEnabled = !matrixAnim.active;
     if (isNowEnabled) {
       matrixAnim.start();
-      matrixToggleBtn.textContent = '[MTX: ON]';
-      matrixToggleBtn.classList.add('active');
     } else {
       matrixAnim.stop();
-      matrixToggleBtn.textContent = '[MTX: OFF]';
-      matrixToggleBtn.classList.remove('active');
     }
+    renderMatrixButton(isNowEnabled);
     await browser.storage.local.set({ matrixEnabled: isNowEnabled });
   });
 
@@ -365,166 +342,154 @@ document.addEventListener('DOMContentLoaded', async () => {
   } else {
     updateUptimeDisplay(0);
   }
+
+  runConsoleBootSequence();
 });
 
 async function runConsoleBootSequence() {
+  const online = proxyEnabled && activeProxy;
   const bootLines = [
-    { text: 'Initializing DarkProxy HUD environment...', type: 'info' },
-    { text: 'Hooking route interception filter sockets...', type: 'muted' },
-    { text: 'Syncing encrypted SQL profile database...', type: 'muted' },
-    { text: `Security context: SHIELD-LVL-0x${Math.floor(Math.random()*8)+3}`, type: 'success' },
-    { text: 'Anti-Leak DNS routing tunnel: VERIFIED.', type: 'success' },
+    { text: 'starting darkproxy console', type: 'muted' },
+    { text: 'reading profiles from local storage', type: 'muted' },
+    { text: `loaded ${proxies.length} profile${proxies.length === 1 ? '' : 's'}`, type: 'success' },
+    online
+      ? { text: `routing via ${activeProxy.name} (${activeProxy.host}:${activeProxy.port})`, type: 'success' }
+      : { text: 'proxy off — traffic goes direct', type: 'info' },
   ];
 
-  for (let i = 0; i < bootLines.length; i++) {
-    await new Promise(res => setTimeout(res, 60 + i * 50));
-    logConsole(bootLines[i].text, bootLines[i].type);
+  for (const line of bootLines) {
+    await new Promise(res => setTimeout(res, 70));
+    logConsole(line.text, line.type);
   }
-
-  logConsole(`Systems ONLINE. Database sync OK. Found ${proxies.length} profile(s).`, 'success');
 }
 
 function logConsole(message, type = 'muted') {
-  const timestamp = new Date().toLocaleTimeString('en-US', { hour12: false });
   const line = document.createElement('div');
-  line.className = `log-line text-${type}`;
-  
-  let prefix = '[*]';
-  if (type === 'success') prefix = '[+]';
-  if (type === 'info') prefix = '[i]';
-  if (type === 'alert') prefix = '[!]';
-  
-  line.textContent = `${prefix} [${timestamp}] ${message}`;
-  terminalContent.appendChild(line);
-  
-  const body = document.querySelector('.terminal-body');
-  body.scrollTop = body.scrollHeight;
+  line.className = `log-line log-${type}`;
 
-  const lines = terminalContent.querySelectorAll('.log-line');
-  if (lines.length > 50) {
-    terminalContent.removeChild(lines[0]);
+  const time = document.createElement('span');
+  time.className = 'log-time';
+  time.textContent = new Date().toLocaleTimeString('en-US', { hour12: false });
+
+  const tag = document.createElement('span');
+  tag.className = 'log-tag';
+  tag.textContent = `[${LOG_TAGS[type] || LOG_TAGS.muted}]`;
+
+  const text = document.createElement('span');
+  text.className = 'log-msg';
+  text.textContent = message;
+
+  line.append(time, tag, text);
+  terminalContent.appendChild(line);
+  logBody.scrollTop = logBody.scrollHeight;
+
+  while (terminalContent.children.length > 50) {
+    terminalContent.firstElementChild.remove();
   }
+}
+
+function showView(view) {
+  viewDashboard.classList.toggle('active', view === viewDashboard);
+  viewAddProfile.classList.toggle('active', view === viewAddProfile);
+  if (view === viewAddProfile) {
+    document.getElementById('proxy-name').focus();
+  }
+}
+
+function renderSoundButton(enabled) {
+  soundToggleBtn.textContent = `snd:${enabled ? 'on' : 'off'}`;
+  soundToggleBtn.classList.toggle('active', enabled);
+  soundToggleBtn.setAttribute('aria-pressed', String(enabled));
+}
+
+function renderMatrixButton(enabled) {
+  matrixToggleBtn.textContent = `rain:${enabled ? 'on' : 'off'}`;
+  matrixToggleBtn.classList.toggle('active', enabled);
+  matrixToggleBtn.setAttribute('aria-pressed', String(enabled));
+}
+
+function formatType(type) {
+  return TYPE_LABELS[type] || type;
 }
 
 // Renders list of saved profiles
 function renderProfilesList() {
-  profilesList.innerHTML = '';
-  profileCount.textContent = `${proxies.length} profile${proxies.length === 1 ? '' : 's'}`;
-  
+  profilesList.replaceChildren();
+  profileCount.textContent = `(${proxies.length})`;
+
   if (proxies.length === 0) {
-    profilesList.innerHTML = '<div class="empty-list-msg">NO PROFILES LOADED. ADD ONE ABOVE.</div>';
+    const empty = document.createElement('li');
+    empty.className = 'profiles-empty';
+    empty.textContent = 'no profiles — use [+ add] to create one';
+    profilesList.appendChild(empty);
     return;
   }
-  
+
   proxies.forEach(profile => {
-    const item = document.createElement('div');
-    const isActive = activeProxy && activeProxy.id === profile.id;
-    
-    item.className = `profile-item ${isActive ? 'active' : ''}`;
-    
-    const info = document.createElement('div');
-    info.className = 'profile-item-info';
-    info.addEventListener('click', () => handleSelectProfile(profile));
-    
-    const title = document.createElement('span');
-    title.className = 'profile-item-title';
-    title.textContent = profile.name;
-    
+    const isActive = !!(activeProxy && activeProxy.id === profile.id);
+
+    const item = document.createElement('li');
+    item.className = `profile${isActive ? ' active' : ''}`;
+
+    const select = document.createElement('button');
+    select.type = 'button';
+    select.className = 'profile-select';
+    select.title = isActive ? 'Selected profile' : 'Use this profile';
+    select.setAttribute('aria-pressed', String(isActive));
+    select.addEventListener('click', () => handleSelectProfile(profile));
+
+    const mark = document.createElement('span');
+    mark.className = 'profile-mark';
+    mark.textContent = isActive ? '*' : ' ';
+
+    const name = document.createElement('span');
+    name.className = 'profile-name';
+    name.textContent = profile.name;
+
     const meta = document.createElement('span');
-    meta.className = 'profile-item-meta';
-    meta.textContent = `${profile.type.toUpperCase()} // ${profile.host}:${profile.port}`;
-    
-    info.appendChild(title);
-    info.appendChild(meta);
-    
+    meta.className = 'profile-meta';
+    meta.textContent = `${formatType(profile.type)} ${profile.host}:${profile.port}`;
+
+    select.append(mark, name, meta);
+
     const deleteBtn = document.createElement('button');
-    deleteBtn.className = 'delete-btn';
-    deleteBtn.title = 'Purge Profile';
-    deleteBtn.innerHTML = `
-      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-        <polyline points="3 6 5 6 21 6"></polyline>
-        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-      </svg>
-    `;
-    deleteBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      handleDeleteProfile(profile.id);
-    });
-    
-    item.appendChild(info);
-    item.appendChild(deleteBtn);
+    deleteBtn.type = 'button';
+    deleteBtn.className = 'profile-rm';
+    deleteBtn.title = `Delete ${profile.name}`;
+    deleteBtn.textContent = 'rm';
+    deleteBtn.addEventListener('click', () => handleDeleteProfile(profile.id));
+
+    item.append(select, deleteBtn);
     profilesList.appendChild(item);
   });
 }
 
 function updateStatusDisplay() {
-  const rows = document.querySelectorAll('.route-details .detail-row');
-  
-  if (proxyEnabled && activeProxy) {
-    statusText.textContent = 'SECURE ROUTE ACTIVE';
-    statusText.className = 'status-label text-connected';
-    statusLed.className = 'led led-connected';
-    
-    activeName.textContent = activeProxy.name;
-    activeName.className = 'detail-value text-connected';
-    
-    activeAddress.textContent = `${activeProxy.host}:${activeProxy.port}`;
-    activeAddress.className = 'detail-value';
-    
-    activeType.textContent = activeProxy.type.toUpperCase();
-    activeType.className = 'detail-value';
-    
-    rows.forEach(row => row.classList.add('active-state'));
+  const online = !!(proxyEnabled && activeProxy);
+  document.body.classList.toggle('is-online', online);
 
-    svgNodeProxy.classList.remove('disconnected');
-    svgNodeProxy.classList.add('connected');
-    svgProxyLabel.textContent = activeProxy.name.substring(0, 9).toUpperCase();
-    
-    pathLeft.classList.add('active');
-    pathRight.classList.add('active');
-    packetLeft.style.display = 'block';
-    packetRight.style.display = 'block';
+  statusText.textContent = online ? 'proxied' : 'direct';
+  routeProxy.textContent = online ? activeProxy.name : 'direct';
+  routeProxy.title = routeProxy.textContent;
 
-    document.querySelector('.route-card').setAttribute('data-sec-lbl', 'NET-SEC: SECURED');
-    document.querySelector('.diagnostics-card').classList.add('active');
-  } else {
-    statusText.textContent = 'OFFLINE (DIRECT)';
-    statusText.className = 'status-label text-disconnected';
-    statusLed.className = 'led led-disconnected';
-    
-    activeName.textContent = 'DIRECT_CONNECTION';
-    activeName.className = 'detail-value text-muted';
-    
-    activeAddress.textContent = 'BYPASS_ACTIVE';
-    activeAddress.className = 'detail-value text-muted';
-    
-    activeType.textContent = 'DIRECT';
-    activeType.className = 'detail-value text-muted';
-    
-    rows.forEach(row => row.classList.remove('active-state'));
+  setDetail(activeName, activeProxy ? activeProxy.name : 'none');
+  setDetail(activeAddress, activeProxy ? `${activeProxy.host}:${activeProxy.port}` : '—');
+  setDetail(activeType, activeProxy ? formatType(activeProxy.type) : '—');
+}
 
-    svgNodeProxy.classList.remove('connected');
-    svgNodeProxy.classList.add('disconnected');
-    svgProxyLabel.textContent = 'DIRECT';
-    
-    pathLeft.classList.remove('active');
-    pathRight.classList.remove('active');
-    packetLeft.style.display = 'none';
-    packetRight.style.display = 'none';
-
-    document.querySelector('.route-card').setAttribute('data-sec-lbl', 'NET-SEC: LOW');
-    document.querySelector('.diagnostics-card').classList.remove('active');
-  }
+function setDetail(el, value) {
+  el.textContent = value;
+  el.title = value;
 }
 
 function startUptimeTracker(startTime) {
   if (uptimeInterval) clearInterval(uptimeInterval);
-  
+
   const update = () => {
     const delta = Math.floor((Date.now() - startTime) / 1000);
     updateUptimeDisplay(delta);
   };
-  
+
   update();
   uptimeInterval = setInterval(update, 1000);
 }
@@ -533,7 +498,7 @@ function updateUptimeDisplay(totalSeconds) {
   const hrs = String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
   const mins = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
   const secs = String(totalSeconds % 60).padStart(2, '0');
-  
+
   uptimeCounter.textContent = `${hrs}:${mins}:${secs}`;
 }
 
@@ -545,20 +510,25 @@ function stopUptimeTracker() {
   updateUptimeDisplay(0);
 }
 
+// Draws an htop-style text meter, e.g. [|||||||             ]
+function setBar(el, percent) {
+  const filled = Math.round((Math.min(Math.max(percent, 0), 100) / 100) * BAR_WIDTH);
+  const fill = document.createElement('span');
+  fill.className = 'bar-fill';
+  fill.textContent = '|'.repeat(filled);
+  el.replaceChildren('[', fill, ' '.repeat(BAR_WIDTH - filled), ']');
+}
+
 function startDiagnosticsTelemetry() {
   if (diagInterval) clearInterval(diagInterval);
 
   const updateDiag = async () => {
     if (proxyEnabled && activeProxy) {
-      packetStatus.textContent = 'PAC_INTERCEPT: MONITORING';
-      packetStatus.style.color = 'var(--accent-green)';
+      packetStatus.textContent = 'monitoring';
 
-      const packetsGained = Math.floor(Math.random() * 5) + 1;
-      cumulativePackets += packetsGained;
-      
+      cumulativePackets += Math.floor(Math.random() * 5) + 1;
       packetCountVal.textContent = cumulativePackets.toLocaleString();
-      const packetPercentage = (cumulativePackets % 500) / 5; 
-      packetBar.style.width = `${packetPercentage}%`;
+      setBar(packetBar, (cumulativePackets % 500) / 5);
 
       if (Math.random() > 0.8) {
         try {
@@ -566,36 +536,33 @@ function startDiagnosticsTelemetry() {
         } catch (e) {}
       }
 
-      const targetLatency = Math.floor(Math.random() * 120) + 55;
-      latencyVal.textContent = `${targetLatency} ms`;
-      const latencyPercentage = Math.min((targetLatency / 300) * 100, 100);
-      latencyBar.style.width = `${latencyPercentage}%`;
+      const latency = Math.floor(Math.random() * 120) + 55;
+      latencyVal.textContent = `${latency} ms`;
+      setBar(latencyBar, (latency / 300) * 100);
 
-      const targetBitrate = (Math.random() * 850 + 150).toFixed(1);
-      bitrateVal.textContent = `${targetBitrate} KB/s`;
-      const bitratePercentage = Math.min((parseFloat(targetBitrate) / 1200) * 100, 100);
-      bitrateBar.style.width = `${bitratePercentage}%`;
+      const bitrate = Math.random() * 850 + 150;
+      bitrateVal.textContent = `${bitrate.toFixed(1)} kB/s`;
+      setBar(bitrateBar, (bitrate / 1200) * 100);
 
-      const targetCpu = Math.floor(Math.random() * 18) + 4;
-      cpuVal.textContent = `${targetCpu}%`;
-      cpuBar.style.width = `${(targetCpu / 25) * 100}%`;
+      const cpu = Math.floor(Math.random() * 18) + 4;
+      cpuVal.textContent = `${cpu}%`;
+      setBar(cpuBar, (cpu / 25) * 100);
 
     } else {
-      packetStatus.textContent = 'PAC_INTERCEPT: INACTIVE';
-      packetStatus.style.color = 'var(--text-muted)';
-      
+      packetStatus.textContent = 'idle';
+
       packetCountVal.textContent = '0';
-      packetBar.style.width = '0%';
-      
+      setBar(packetBar, 0);
+
       latencyVal.textContent = '0 ms';
-      latencyBar.style.width = '0%';
-      
-      bitrateVal.textContent = '0.0 KB/s';
-      bitrateBar.style.width = '0%';
-      
+      setBar(latencyBar, 0);
+
+      bitrateVal.textContent = '0.0 kB/s';
+      setBar(bitrateBar, 0);
+
       const idleCpu = Math.floor(Math.random() * 3) + 1;
       cpuVal.textContent = `${idleCpu}%`;
-      cpuBar.style.width = `${(idleCpu / 25) * 100}%`;
+      setBar(cpuBar, (idleCpu / 25) * 100);
     }
   };
 
@@ -605,90 +572,90 @@ function startDiagnosticsTelemetry() {
 
 async function handleToggleProxy(e) {
   proxyEnabled = e.target.checked;
-  
+
   try {
     if (proxyEnabled) {
       if (!activeProxy) {
-        logConsole('WARN: Interception failed. Select/configure a proxy gate first.', 'alert');
+        logConsole('no profile selected — pick one before turning the proxy on', 'alert');
         audioEngine.playAlert();
         proxyToggle.checked = false;
         proxyEnabled = false;
         return;
       }
-      
+
       const startTime = Date.now();
-      await browser.storage.local.set({ 
+      await browser.storage.local.set({
         proxyEnabled: true,
         connectionStartTime: startTime
       });
-      
+
       startUptimeTracker(startTime);
       audioEngine.playConnect();
-      logConsole(`Interception active. Forwarding all packages through profile [${activeProxy.name}]`, 'success');
+      logConsole(`proxy on — routing via ${activeProxy.name} (${activeProxy.host}:${activeProxy.port})`, 'success');
     } else {
       await browser.storage.local.set({ proxyEnabled: false });
       await browser.storage.local.remove('connectionStartTime');
-      
+
       stopUptimeTracker();
       audioEngine.playDisconnect();
-      logConsole('Interception deactivated. Traffic routed directly (Clearing hooks).', 'info');
+      logConsole('proxy off — traffic goes direct', 'info');
     }
-    
+
     updateStatusDisplay();
     renderProfilesList();
   } catch (error) {
     audioEngine.playAlert();
-    logConsole(`CRITICAL: Error toggling route: ${error.message}`, 'alert');
+    logConsole(`could not toggle proxy: ${error.message}`, 'alert');
   }
 }
 
 async function handleSelectProfile(profile) {
   if (activeProxy && activeProxy.id === profile.id) {
     audioEngine.playClick();
-    logConsole(`Profile [${profile.name}] is already bound to gate.`, 'info');
+    logConsole(`${profile.name} is already selected`, 'muted');
     return;
   }
-  
+
   activeProxy = profile;
   audioEngine.playClick();
-  logConsole(`Interception target set to: [${profile.name}]`, 'info');
-  
+  logConsole(`selected ${profile.name}`, 'info');
+
   try {
     const updatePayload = { activeProxy: profile };
-    
+
     if (proxyEnabled) {
       const newStartTime = Date.now();
       updatePayload.connectionStartTime = newStartTime;
       startUptimeTracker(newStartTime);
       audioEngine.playConnect();
-      logConsole(`Hot-swapped route gate: ${profile.host}:${profile.port}`, 'success');
+      logConsole(`now routing via ${profile.host}:${profile.port}`, 'success');
     }
-    
+
     await browser.storage.local.set(updatePayload);
     updateStatusDisplay();
     renderProfilesList();
   } catch (error) {
     audioEngine.playAlert();
-    logConsole(`CRITICAL: Error targeting profile: ${error.message}`, 'alert');
+    logConsole(`could not select profile: ${error.message}`, 'alert');
   }
 }
 
 async function handleDeleteProfile(profileId) {
   const target = proxies.find(p => p.id === profileId);
   if (!target) return;
-  
+
   audioEngine.playAlert();
-  
+
   try {
     proxies = proxies.filter(p => p.id !== profileId);
-    logConsole(`Purged database profile node: [${target.name}]`, 'info');
-    
+    logConsole(`deleted ${target.name}`, 'info');
+
     const updatePayload = { proxies };
-    
+
     if (activeProxy && activeProxy.id === profileId) {
       activeProxy = null;
       updatePayload.activeProxy = null;
-      
+
       if (proxyEnabled) {
         proxyEnabled = false;
         proxyToggle.checked = false;
@@ -696,28 +663,28 @@ async function handleDeleteProfile(profileId) {
         updatePayload.connectionStartTime = null;
         stopUptimeTracker();
         audioEngine.playDisconnect();
-        logConsole('Active routing profile purged. Resetting gateway to DIRECT.', 'alert');
+        logConsole('active profile deleted — proxy turned off', 'alert');
       }
     }
-    
+
     await browser.storage.local.set(updatePayload);
     updateStatusDisplay();
     renderProfilesList();
   } catch (error) {
-    logConsole(`CRITICAL: Error purging database node: ${error.message}`, 'alert');
+    logConsole(`could not delete profile: ${error.message}`, 'alert');
   }
 }
 
 async function handleAddProfile(e) {
   e.preventDefault();
-  
+
   const nameInput = document.getElementById('proxy-name');
   const typeInput = document.getElementById('proxy-type');
   const hostInput = document.getElementById('proxy-host');
   const portInput = document.getElementById('proxy-port');
   const userInput = document.getElementById('proxy-user');
   const passInput = document.getElementById('proxy-pass');
-  
+
   const newProfile = {
     id: Date.now().toString(),
     name: nameInput.value.trim(),
@@ -727,44 +694,41 @@ async function handleAddProfile(e) {
     username: userInput.value.trim() || null,
     password: passInput.value || null
   };
-  
+
   if (!newProfile.name || !newProfile.host || isNaN(newProfile.port)) {
     audioEngine.playAlert();
-    logConsole('ERROR: Profile validation failed. Input buffer fields empty.', 'alert');
+    logConsole('name, host and port are required', 'alert');
     return;
   }
-  
+
   if (proxies.some(p => p.name.toLowerCase() === newProfile.name.toLowerCase())) {
     audioEngine.playAlert();
-    logConsole(`ERROR: Identifier duplication. "${newProfile.name}" already exists.`, 'alert');
+    logConsole(`a profile named "${newProfile.name}" already exists`, 'alert');
     return;
   }
-  
+
   try {
     proxies.push(newProfile);
     await browser.storage.local.set({ proxies });
-    
+
     audioEngine.playConnect();
-    logConsole(`Successfully injected proxy gate node: [${newProfile.name}]`, 'success');
-    
+    logConsole(`added ${newProfile.name} (${formatType(newProfile.type)} ${newProfile.host}:${newProfile.port})`, 'success');
+
     if (proxies.length === 1) {
       await handleSelectProfile(newProfile);
     }
-    
+
     addForm.reset();
     renderProfilesList();
-    
-    viewAddProfile.classList.remove('active');
-    viewDashboard.classList.add('active');
-    logConsole('Database modified. Returning to dashboard console.', 'success');
+    showView(viewDashboard);
   } catch (error) {
     audioEngine.playAlert();
-    logConsole(`CRITICAL: Error saving node injection: ${error.message}`, 'alert');
+    logConsole(`could not save profile: ${error.message}`, 'alert');
   }
 }
 
 function handleClearLogs() {
   audioEngine.playClick();
-  terminalContent.innerHTML = '';
-  logConsole('Console telemetry logs flushed.', 'info');
+  terminalContent.replaceChildren();
+  logConsole('log cleared', 'muted');
 }

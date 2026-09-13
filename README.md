@@ -8,7 +8,7 @@ DarkProxy is a high-contrast Firefox browser extension designed to intercept and
 *   **Seeded Database**: Pre-seeded with a default localhost gateway configuration (`127.0.0.1:1080` SOCKS5).
 *   **Live Route Representation**: An interactive SVG connection path graph showing data packet flows.
 *   **System Diagnostics**: Live telemetry dashboard tracking latency, bandwidth, CPU sync, and cumulative routed packet tallies.
-*   **Retro Aesthetics**: Monospaced font layout with customized status LEDs and clean boundaries.
+*   **Grey Terminal Theme**: The popup looks like a grey terminal window, with `$ command` section headers, htop-style meters, and a tmux-style status bar.
 *   **Web Audio Telemetry**: Dynamic audio sweeps synthesized using the Web Audio API on connect, disconnect, click, and alerts.
 *   **Dynamic Matrix Code Rain**: An optional background animation toggled via header controls.
 

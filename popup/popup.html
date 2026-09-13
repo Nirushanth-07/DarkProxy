@@ -3,232 +3,134 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DarkProxy HUD Console</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <title>DarkProxy</title>
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
-  <canvas id="matrix-canvas"></canvas>
+  <div class="window">
 
-  <div class="cyber-container">
-    
-    <header class="cyber-header">
-      <div class="header-logo">
-        <svg class="dragon-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
-        </svg>
-        <span class="logo-text">DARKPROXY // <span class="accent-text">HUD-0x1</span></span>
-      </div>
-      
-      <div class="hud-controls">
-        <button id="sound-toggle-btn" class="hud-control-btn" title="Toggle Audio Feedback">[MUTED]</button>
-        <button id="matrix-toggle-btn" class="hud-control-btn" title="Toggle Code Waterfall">[MTX: OFF]</button>
-      </div>
-
-      <div class="status-indicator">
-        <span id="status-text" class="status-label text-disconnected">OFFLINE</span>
-        <div id="status-led" class="led led-disconnected"></div>
-      </div>
+    <header class="titlebar">
+      <div class="titlebar-dots" aria-hidden="true"><span></span><span></span><span></span></div>
+      <span class="titlebar-title">darkproxy — ~/route</span>
+      <span class="titlebar-meta">v1.0</span>
     </header>
 
-    <main class="cyber-main">
-      
-      <div id="view-dashboard" class="cyber-view active">
-        
-        <section class="cyber-card route-card" data-sec-lbl="NET-SEC: LOW">
-          <div class="card-header">
-            <span class="card-title">// ESTABLISHED SYSTEM ROUTE</span>
-            <div class="switch-container">
-              <label class="cyber-switch">
-                <input type="checkbox" id="proxy-toggle">
-                <span class="slider"></span>
-              </label>
-            </div>
+    <main class="screen">
+      <canvas id="matrix-canvas" aria-hidden="true"></canvas>
+
+      <div id="view-dashboard" class="view active">
+
+        <section class="block">
+          <div class="block-head">
+            <span class="cmd"><span class="ps1">$</span> darkproxy status</span>
+            <label class="toggle" title="Route traffic through the selected profile">
+              <input type="checkbox" id="proxy-toggle" aria-label="Proxy enabled">
+              <span class="toggle-ui" aria-hidden="true"><span class="toggle-off">off</span><span class="toggle-on">on</span></span>
+            </label>
           </div>
 
-          <div class="route-map-container">
-            <svg id="route-svg" viewBox="0 0 340 70" xmlns="http://www.w3.org/2000/svg">
-              <defs>
-                <linearGradient id="path-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stop-color="#3a4b60" />
-                  <stop offset="50%" stop-color="#00f0ff" id="grad-mid" />
-                  <stop offset="100%" stop-color="#3a4b60" />
-                </linearGradient>
-              </defs>
-              <path d="M 40 30 L 170 30" class="route-path path-left" id="path-left" stroke="#242d38" stroke-width="2" fill="none" />
-              <path d="M 170 30 L 300 30" class="route-path path-right" id="path-right" stroke="#242d38" stroke-width="2" fill="none" />
-              
-              <circle r="3.5" class="packet-dot dot-left" id="packet-left" fill="#00e5ff" style="display: none;" />
-              <circle r="3.5" class="packet-dot dot-right" id="packet-right" fill="#00e5ff" style="display: none;" />
-
-              <g class="node node-local" transform="translate(40, 30)">
-                <circle r="16" class="node-bg" />
-                <circle r="18" class="node-border" />
-                <text class="node-icon" y="4" text-anchor="middle">&#x2325;</text>
-                <text class="node-label" y="28" text-anchor="middle">LOCALHOST</text>
-              </g>
-              
-              <g class="node node-proxy disconnected" id="svg-node-proxy" transform="translate(170, 30)">
-                <circle r="16" class="node-bg" />
-                <circle r="18" class="node-border" />
-                <text class="node-icon" y="4" text-anchor="middle">&#x2382;</text>
-                <text class="node-label" y="28" text-anchor="middle" id="svg-proxy-label">DIRECT</text>
-              </g>
-              
-              <g class="node node-target" transform="translate(300, 30)">
-                <circle r="16" class="node-bg" />
-                <circle r="18" class="node-border" />
-                <text class="node-icon" y="4" text-anchor="middle">&#x21F2;</text>
-                <text class="node-label" y="28" text-anchor="middle">WAN_GATE</text>
-              </g>
-            </svg>
+          <div class="route">
+            <span class="route-node">browser</span>
+            <span class="route-link"></span>
+            <span class="route-node route-proxy" id="route-proxy">direct</span>
+            <span class="route-link"></span>
+            <span class="route-node">internet</span>
           </div>
 
-          <div class="route-details">
-            <div class="detail-row">
-              <span class="detail-label">PROFILE_ID:</span>
-              <span id="active-profile-name" class="detail-value text-muted">DIRECT_CONNECTION</span>
-            </div>
-            <div class="detail-row">
-              <span class="detail-label">GATEWAY_IP:</span>
-              <span id="active-profile-address" class="detail-value text-muted">NO_PROXY</span>
-            </div>
-            <div class="detail-row">
-              <span class="detail-label">INTERCEPT_PROTO:</span>
-              <span id="active-profile-type" class="detail-value text-muted">NONE</span>
-            </div>
-            <div class="detail-row">
-              <span class="detail-label">ROUTE_UPTIME:</span>
-              <span id="uptime-counter" class="detail-value code-font">00:00:00</span>
-            </div>
+          <dl class="kv">
+            <div><dt>profile</dt><dd id="active-profile-name">none</dd></div>
+            <div><dt>proto</dt><dd id="active-profile-type">—</dd></div>
+            <div><dt>gateway</dt><dd id="active-profile-address">—</dd></div>
+            <div><dt>uptime</dt><dd id="uptime-counter">00:00:00</dd></div>
+          </dl>
+        </section>
+
+        <section class="block">
+          <div class="block-head">
+            <span class="cmd"><span class="ps1">$</span> netstat --route</span>
+            <span class="note" id="packet-status">idle</span>
+          </div>
+          <div class="stats">
+            <div class="stat"><span class="stat-label">packets</span><span class="stat-bar" id="packet-bar"></span><span class="stat-value" id="packet-count-val">0</span></div>
+            <div class="stat"><span class="stat-label">latency</span><span class="stat-bar" id="latency-bar"></span><span class="stat-value" id="latency-val">0 ms</span></div>
+            <div class="stat"><span class="stat-label">throughput</span><span class="stat-bar" id="bitrate-bar"></span><span class="stat-value" id="bitrate-val">0.0 kB/s</span></div>
+            <div class="stat"><span class="stat-label">cpu</span><span class="stat-bar" id="cpu-bar"></span><span class="stat-value" id="cpu-val">0%</span></div>
           </div>
         </section>
 
-        <section class="cyber-card diagnostics-card" data-sec-lbl="TELEMETRY_ON">
-          <div class="card-header">
-            <span class="card-title">// ROUTE_DIAGNOSTICS</span>
-            <span class="card-subtitle" id="packet-status">PAC_INTERCEPT: INACTIVE</span>
+        <section class="block">
+          <div class="block-head">
+            <span class="cmd"><span class="ps1">$</span> ls profiles <span class="note" id="profile-count">(0)</span></span>
+            <button type="button" id="go-to-add-btn" class="btn-text">+ add</button>
           </div>
-          <div class="diagnostics-grid">
-            <div class="diag-item">
-              <div class="diag-meta">
-                <span class="diag-label">ROUTED PACKETS:</span>
-                <span class="diag-value" id="packet-count-val">0</span>
-              </div>
-              <div class="diag-bar-track">
-                <div class="diag-bar-fill" id="packet-bar" style="width: 0%"></div>
-              </div>
-            </div>
-            <div class="diag-item">
-              <div class="diag-meta">
-                <span class="diag-label">RTT LATENCY:</span>
-                <span class="diag-value" id="latency-val">0 ms</span>
-              </div>
-              <div class="diag-bar-track">
-                <div class="diag-bar-fill" id="latency-bar" style="width: 0%"></div>
-              </div>
-            </div>
-            <div class="diag-item">
-              <div class="diag-meta">
-                <span class="diag-label">INTRUSION BITRATE:</span>
-                <span class="diag-value" id="bitrate-val">0.0 KB/s</span>
-              </div>
-              <div class="diag-bar-track">
-                <div class="diag-bar-fill" id="bitrate-bar" style="width: 0%"></div>
-              </div>
-            </div>
-            <div class="diag-item">
-              <div class="diag-meta">
-                <span class="diag-label">CPU SYNC DEPTH:</span>
-                <span class="diag-value" id="cpu-val">0%</span>
-              </div>
-              <div class="diag-bar-track">
-                <div class="diag-bar-fill" id="cpu-bar" style="width: 0%"></div>
-              </div>
-            </div>
-          </div>
+          <ul id="profiles-list" class="profiles"></ul>
         </section>
 
-        <section class="cyber-card list-card" data-sec-lbl="DB_READ">
-          <div class="card-header">
-            <span class="card-title">// STORAGE_PROFILE_DATABASE</span>
-            <div class="header-actions">
-              <span class="card-subtitle" id="profile-count">0 profiles</span>
-              <button id="go-to-add-btn" class="action-text-btn">[+ INJECT_NEW]</button>
-            </div>
+        <section class="block block-log">
+          <div class="block-head">
+            <span class="cmd"><span class="ps1">$</span> tail -f darkproxy.log</span>
+            <button type="button" id="clear-log-btn" class="btn-text">clear</button>
           </div>
-          <div class="profiles-list-container">
-            <div id="profiles-list" class="profiles-list">
-              <div class="empty-list-msg">NO PROFILES LOADED. ADD ONE.</div>
-            </div>
-          </div>
-        </section>
-
-        <section class="cyber-card terminal-card" data-sec-lbl="SYS_LOG">
-          <div class="card-header">
-            <span class="card-title">// ROOT_CONSOLE_LOG</span>
-            <button id="clear-log-btn" class="clear-btn">[FLUSH]</button>
-          </div>
-          <div class="terminal-body">
-            <div id="terminal-content" class="terminal-text">
-            </div>
-            <div class="terminal-prompt">
-              <span class="prompt-user">root@kali-proxy:~$</span>
-              <span class="prompt-cursor">_</span>
-            </div>
+          <div class="log" id="log-body">
+            <div id="terminal-content"></div>
+            <div class="prompt-line" aria-hidden="true"><span class="ps1">$</span><span class="cursor"></span></div>
           </div>
         </section>
       </div>
 
-      <div id="view-add-profile" class="cyber-view">
-        <section class="cyber-card form-card" data-sec-lbl="SEC_CONFIG">
-          <div class="card-header">
-            <span class="card-title">// PROXY_INJECTION_UNIT</span>
-            <button type="button" id="back-to-dash-btn" class="action-text-btn">[&lt; ESCAPE]</button>
+      <div id="view-add-profile" class="view">
+        <section class="block">
+          <div class="block-head">
+            <span class="cmd"><span class="ps1">$</span> darkproxy add</span>
+            <button type="button" id="back-to-dash-btn" class="btn-text">cancel</button>
           </div>
-          <form id="add-proxy-form" class="cyber-form">
-            <div class="form-grid">
-              <div class="input-group">
-                <label for="proxy-name">PROFILE IDENTIFIER</label>
-                <input type="text" id="proxy-name" placeholder="e.g. TOR-GATE" required autocomplete="off">
-              </div>
-              <div class="input-group">
-                <label for="proxy-type">TUNNEL PROTOCOL</label>
-                <select id="proxy-type" required>
-                  <option value="socks">SOCKS5</option>
-                  <option value="socks4">SOCKS4</option>
-                  <option value="http">HTTP</option>
-                  <option value="https">HTTPS</option>
-                </select>
-              </div>
-              <div class="input-group span-2">
-                <label for="proxy-host">GATEWAY ADDRESS / HOST / IP</label>
-                <input type="text" id="proxy-host" placeholder="127.0.0.1" value="127.0.0.1" required autocomplete="off">
-              </div>
-              <div class="input-group">
-                <label for="proxy-port">ROUTING PORT</label>
-                <input type="number" id="proxy-port" placeholder="1080" value="1080" required min="1" max="65535" autocomplete="off">
-              </div>
-              <div class="input-group">
-                <label for="proxy-user">USER (OPT)</label>
-                <input type="text" id="proxy-user" placeholder="anonymous" autocomplete="off">
-              </div>
-              <div class="input-group span-2">
-                <label for="proxy-pass">ENCRYPTED KEY / PASS (OPT)</label>
-                <input type="password" id="proxy-pass" placeholder="••••••••" autocomplete="off">
-              </div>
+
+          <form id="add-proxy-form" class="form">
+            <div class="field">
+              <label for="proxy-name">--name</label>
+              <input type="text" id="proxy-name" placeholder="tor-local" required autocomplete="off">
             </div>
-            <button type="submit" id="add-btn" class="cyber-button glow-btn">
-              <span class="btn-text">INJECT INTO DATABASE</span>
-              <span class="btn-glitch"></span>
-            </button>
+            <div class="field">
+              <label for="proxy-type">--type</label>
+              <select id="proxy-type" required>
+                <option value="socks">socks5</option>
+                <option value="socks4">socks4</option>
+                <option value="http">http</option>
+                <option value="https">https</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="proxy-host">--host</label>
+              <input type="text" id="proxy-host" placeholder="127.0.0.1" value="127.0.0.1" required autocomplete="off">
+            </div>
+            <div class="field">
+              <label for="proxy-port">--port</label>
+              <input type="number" id="proxy-port" placeholder="1080" value="1080" required min="1" max="65535" autocomplete="off">
+            </div>
+            <div class="field">
+              <label for="proxy-user">--user</label>
+              <input type="text" id="proxy-user" placeholder="optional" autocomplete="off">
+            </div>
+            <div class="field">
+              <label for="proxy-pass">--pass</label>
+              <input type="password" id="proxy-pass" placeholder="optional" autocomplete="off">
+            </div>
+            <div class="form-actions">
+              <button type="submit" id="add-btn" class="btn">save profile</button>
+            </div>
           </form>
         </section>
       </div>
-
     </main>
+
+    <footer class="statusbar">
+      <span class="sb-session">[darkproxy]</span>
+      <span class="sb-state"><span class="led"></span><span id="status-text">direct</span></span>
+      <span class="sb-spacer"></span>
+      <button type="button" id="sound-toggle-btn" class="sb-btn" aria-pressed="false">snd:off</button>
+      <button type="button" id="matrix-toggle-btn" class="sb-btn" aria-pressed="false">rain:off</button>
+    </footer>
+
   </div>
   <script src="popup.js"></script>
 </body>
