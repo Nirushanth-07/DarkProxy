@@ -1,0 +1,37 @@
+{
+  "manifest_version": 3,
+  "name": "DarkProxy",
+  "version": "1.0.0",
+  "description": "Kali Linux inspired Firefox proxy switcher & connection dashboard.",
+  "developer": {
+    "name": "Antigravity DevTeam"
+  },
+  "permissions": [
+    "proxy",
+    "storage",
+    "webRequest",
+    "webRequestBlocking"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "scripts": ["background.js"]
+  },
+  "action": {
+    "default_icon": "icons/icon.svg",
+    "default_popup": "popup/popup.html",
+    "default_title": "DarkProxy HUD Console"
+  },
+  "icons": {
+    "48": "icons/icon.svg",
+    "96": "icons/icon.svg",
+    "128": "icons/icon.svg"
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "darkproxy@kali.cyber",
+      "strict_min_version": "109.0"
+    }
+  }
+}
